@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scenario Generator 231RDB193</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- Sānu izvēlnes josla -->
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="logo-mark">MB</span>
+      <div>
+        <div class="logo-name">231RDB193</div>
+        <div class="logo-sub">RTU 2026</div>
+      </div>
+    </div>
+
+    <nav>
+      <button class="nav-btn active" data-tab="extract">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 10v3H3v-3"/><path d="M8 2v7m-3-3 3 3 3-3"/></svg>
+        Prasību izguve
+      </button>
+      <button class="nav-btn" data-tab="generate">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h10M3 8h7M3 12h4"/><circle cx="13" cy="11" r="2.5"/><path d="M15 13l1.5 1.5"/></svg>
+        Gherkin ģenerēšana
+      </button>
+      <button class="nav-btn" data-tab="settings">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1v2m0 10v2M1 8h2m10 0h2M3.05 3.05l1.41 1.41m7.08 7.08 1.41 1.41M3.05 12.95l1.41-1.41m7.08-7.08 1.41-1.41"/></svg>
+        Iestatījumi
+      </button>
+    </nav>
+  </aside>
+
+  <!-- Galvenā lapa -->
+  <main class="main">
+
+    <!-- Prasību izguve -->
+    <div id="tab-extract" class="tab active">
+      <div class="page-head">
+        <h1>Prasību izguve</h1>
+        <p>Izvelciet funkcionālās prasības no SRS dokumenta</p>
+      </div>
+
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="mode-text">Ielīmēt tekstu</button>
+        <button class="mode-btn" id="mode-file">Augšupielādēt .docx</button>
+      </div>
+
+      <!-- Teksts -->
+      <div id="section-text">
+        <label class="lbl">Dokumenta teksts ar "Funkcionālās prasības" sadaļu</label>
+        <textarea id="raw-text" class="textarea"
+          placeholder="3. Funkcionālās prasības&#10;&#10;FP-1  Sistēma ļauj lietotājam autentificēties ar e-pastu un paroli.&#10;FP-2  Sistēma attēlo lietotāja profila informāciju pēc pieteikšanās.&#10;&#10;4. Nefunkcionālās prasības&#10;..."></textarea>
+        <button class="btn btn-primary" id="btn-extract-text">Izgūt prasības</button>
+      </div>
+
+      <!-- Fails -->
+      <div id="section-file" class="hidden">
+        <div class="drop" id="drop-zone">
+          <div class="drop-icon">
+            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.4" width="38" height="38">
+              <rect x="6" y="4" width="20" height="28" rx="2"/>
+              <path d="M18 4v8h8"/>
+              <path d="M28 30v8m-4-4 4 4 4-4"/>
+            </svg>
+          </div>
+          <div class="drop-title">Novietojiet .docx failu šeit</div>
+          <div class="drop-hint">vai <label for="file-inp" class="file-lbl">izvēlieties failu</label></div>
+          <input type="file" id="file-inp" accept=".docx" class="hidden">
+        </div>
+        <div id="file-status" class="status-line"></div>
+      </div>
+
+      <!-- Rezultāts -->
+      <div id="req-result" class="hidden">
+        <div class="result-header">
+          <span class="result-title">Izgūtās prasības <span class="badge" id="req-count">0</span></span>
+          <div class="result-actions">
+            <button class="btn btn-sm" id="btn-sel-all">Atzīmēt visas</button>
+            <button class="btn btn-sm btn-primary" id="btn-goto-gen">Ģenerēt Gherkin -></button>
+          </div>
+        </div>
+        <div class="req-list" id="req-list"></div>
+      </div>
+    </div>
+
+    <!-- Gherkin ģenerēšana -->
+    <div id="tab-generate" class="tab hidden">
+      <div class="page-head">
+        <h1>Gherkin ģenerēšana</h1>
+        <p>Ģenerē BDD testa scenārijus ar GROQ LLM API vai lokālu modeli</p>
+      </div>
+
+      <div id="gen-alert" class="alert hidden"></div>
+
+      <div class="gen-layout">
+
+        <!-- Ģenerēšanas vadības panelis -->
+        <div class="gen-panel">
+          <section class="panel-section">
+            <h3>Izvēlētās prasības</h3>
+            <div id="gen-req-preview">
+              <div class="empty">
+                Nav izvēlētu prasību -
+                <button class="link" onclick="switchTab('extract')">dodieties uz Prasību izguvi</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel-section">
+            <h3>Modelis</h3>
+            <select id="model-select" class="select">
+              <optgroup label="GROQ (mākoņa API)">
+                <option value="groq:llama-3.3-70b-versatile">llama-3.3-70b-versatile</option>
+              </optgroup>
+              <optgroup label="Ollama (lokāls)">
+                <option value="ollama:llama3.1:8b">llama3.1:8b</option>
+                <option value="ollama:llama3.2:3b">llama3.2:3b</option>
+                <option value="ollama:gemma3:4b">gemma3:4b</option>
+                <option value="ollama:qwen3:8b">qwen3:8b</option>
+              </optgroup>
+            </select>
+          </section>
+
+          <section class="panel-section">
+            <h3>Uzvedne</h3>
+            <select id="prompt-select" class="select">
+              <option value="1">1. Few-shot (ar piemēriem)</option>
+              <option value="2">2. Zero-shot (bez piemēriem)</option>
+            </select>
+          </section>
+
+          <button class="btn btn-primary btn-full" id="btn-gen">Ģenerēt scenārijus</button>
+
+          <div id="gen-progress" class="hidden">
+            <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+            <div class="progress-text" id="progress-text"></div>
+          </div>
+        </div>
+
+        <!-- Izvade -->
+        <div class="gen-output">
+          <div id="output-placeholder" class="output-empty">
+            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.2" width="40" height="40">
+              <rect x="8" y="5" width="24" height="30" rx="2"/>
+              <path d="M20 5v10h12M14 20h12M14 26h8M14 32h5"/>
+            </svg>
+            <p>Ģenerētais .feature fails parādīsies šeit</p>
+          </div>
+          <div id="output-ready" class="hidden">
+            <div class="output-bar">
+              <span class="output-fname">scenarios.feature</span>
+              <div class="output-btns">
+                <button class="btn btn-sm" id="btn-copy">Kopēt</button>
+                <button class="btn btn-sm btn-primary" id="btn-dl">↓ Lejupielādēt</button>
+              </div>
+            </div>
+            <pre class="feature-pre" id="feature-out"></pre>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Iestatījumi -->
+    <div id="tab-settings" class="tab hidden">
+      <div class="page-head">
+        <h1>Iestatījumi</h1>
+      </div>
+
+      <div class="settings-card">
+        <h2>GROQ API atslēga</h2>
+        <p class="muted">Atslēga tiek saglabāta tikai pārlūka <code>localStorage</code> - netiek sūtīta uz citiem serveriem.</p>
+        <div class="field-row">
+          <input type="password" id="settings-key" class="input" placeholder="gsk_...">
+          <button class="btn btn-primary" id="btn-save-key">Saglabāt</button>
+        </div>
+        <div id="key-saved" class="alert alert-ok hidden">Atslēga saglabāta!</div>
+        <p class="hint-link">Bezmaksas atslēgu var iegūt: <a href="https://console.groq.com" target="_blank">console.groq.com</a></p>
+      </div>
+
+      <div class="settings-card" style="margin-top:1rem">
+        <h2>Gherkin atslēgvārdi</h2>
+        <p class="muted">Izvēlies valodu, kādā tiek rakstīti Gherkin soļu atslēgvārdi.</p>
+        <div class="lang-toggle" id="lang-toggle">
+          <button class="lang-btn active" data-lang="lv">
+            <span class="lang-kw">Kad / Ja / Tad</span>
+            <span class="lang-name">Latviešu</span>
+          </button>
+          <button class="lang-btn" data-lang="en">
+            <span class="lang-kw">Given / When / Then</span>
+            <span class="lang-name">Angļu</span>
+          </button>
+        </div>
+        <div id="lang-saved" class="alert alert-ok hidden">Valoda saglabāta!</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script type="module" src="/static/js/app.js"></script>
+</body>
+</html>
